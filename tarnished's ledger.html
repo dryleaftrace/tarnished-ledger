@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarnished's Ledger</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #c9a84c;
+    --gold-bright: #e8c96a;
+    --gold-dim: #8a6f2e;
+    --gold-faint: #3a2e10;
+    --bg-deep: #0a0806;
+    --bg-card: #110e08;
+    --bg-section: #161008;
+    --bg-hover: #1e1608;
+    --text-main: #d4b896;
+    --text-dim: #8a7560;
+    --text-bright: #ede0c4;
+    --red-accent: #8b2020;
+    --red-bright: #c0392b;
+    --border: #2a1f0a;
+    --border-gold: #4a3515;
+    --shadow-gold: rgba(201,168,76,0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg-deep);
+    color: var(--text-main);
+    font-family: 'EB Garamond', serif;
+    font-size: 16px;
+    min-height: 100vh;
+    background-image: 
+      radial-gradient(ellipse at 20% 20%, rgba(201,168,76,0.03) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(139,32,32,0.04) 0%, transparent 50%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  }
+
+  /* HEADER */
+  .app-header {
+    text-align: center;
+    padding: 48px 24px 32px;
+    position: relative;
+    border-bottom: 1px solid var(--border-gold);
+  }
+  .app-header::before {
+    content: '';
+    position: absolute;
+    bottom: -1px; left: 50%; transform: translateX(-50%);
+    width: 200px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+  .app-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(24px, 5vw, 44px);
+    font-weight: 700;
+    color: var(--gold);
+    text-shadow: 0 0 40px rgba(201,168,76,0.4), 0 2px 4px rgba(0,0,0,0.8);
+    letter-spacing: 0.05em;
+    line-height: 1.2;
+  }
+  .app-subtitle {
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    margin-top: 8px;
+  }
+  .rune-divider {
+    color: var(--gold-dim);
+    font-size: 20px;
+    margin: 12px 0 0;
+    letter-spacing: 12px;
+  }
+
+  /* LAYOUT */
+  .app-body {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 16px 80px;
+  }
+
+  /* CHARACTER BAR */
+  .character-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 20px 0 0;
+    flex-wrap: wrap;
+  }
+  .char-tab {
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 8px 20px;
+    border: 1px solid var(--border-gold);
+    background: var(--bg-card);
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+  }
+  .char-tab:hover { color: var(--gold); border-color: var(--gold-dim); background: var(--bg-hover); }
+  .char-tab.active {
+    color: var(--gold-bright);
+    border-color: var(--gold);
+    background: var(--gold-faint);
+    box-shadow: 0 0 20px var(--shadow-gold);
+  }
+  .char-tab .journey-badge {
+    font-size: 9px;
+    color: var(--text-dim);
+    display: block;
+    margin-top: 2px;
+    letter-spacing: 0.1em;
+  }
+  .char-tab.active .journey-badge { color: var(--gold-dim); }
+  .add-char-btn {
+    font-family: 'Cinzel', serif;
+    font-size: 18px;
+    width: 38px; height: 38px;
+    border: 1px dashed var(--border-gold);
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.2s;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .add-char-btn:hover { color: var(--gold); border-color: var(--gold-dim); }
+
+  /* OVERALL PROGRESS */
+  .overall-progress {
+    margin: 24px 0 0;
+    padding: 20px 24px;
+    border: 1px solid var(--border-gold);
+    background: var(--bg-card);
+    position: relative;
+    overflow: hidden;
+  }
+  .overall-progress::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+  .progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .progress-label {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .progress-pct {
+    font-family: 'Cinzel', serif;
+    font-size: 22px;
+    color: var(--gold);
+    font-weight: 600;
+  }
+  .progress-track {
+    height: 4px;
+    background: var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold-dim), var(--gold-bright));
+    transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+    position: relative;
+  }
+  .progress-fill::after {
+    content: '';
+    position: absolute;
+    right: 0; top: 0; bottom: 0; width: 20px;
+    background: linear-gradient(90deg, transparent, rgba(232,201,106,0.6));
+  }
+  .progress-cats {
+    display: flex;
+    gap: 24px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+  }
+  .progress-cat {
+    flex: 1;
+    min-width: 120px;
+  }
+  .progress-cat-label {
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .progress-cat-label span { color: var(--gold-dim); }
+  .progress-track-sm {
+    height: 2px;
+    background: var(--border);
+    overflow: hidden;
+  }
+  .progress-fill-sm {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+    transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  /* TABS */
+  .section-tabs {
+    display: flex;
+    gap: 0;
+    margin: 28px 0 0;
+    border-bottom: 1px solid var(--border-gold);
+  }
+  .section-tab {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 12px 24px;
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.2s;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+  .section-tab:hover { color: var(--text-main); }
+  .section-tab.active {
+    color: var(--gold);
+    border-bottom-color: var(--gold);
+  }
+
+  /* CONTENT PANEL */
+  .content-panel { padding-top: 24px; }
+  .section-panel { display: none; }
+  .section-panel.active { display: block; }
+
+  /* AREA GROUP */
+  .area-group {
+    margin-bottom: 20px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .area-group:hover { border-color: var(--border-gold); }
+  .area-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 18px;
+    cursor: pointer;
+    background: var(--bg-section);
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .area-header:hover { background: var(--bg-hover); }
+  .area-title {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  .area-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .area-count {
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+  }
+  .area-chevron {
+    color: var(--gold-dim);
+    font-size: 10px;
+    transition: transform 0.2s;
+  }
+  .area-group.collapsed .area-chevron { transform: rotate(-90deg); }
+  .area-body { padding: 0 18px 14px; }
+  .area-group.collapsed .area-body { display: none; }
+
+  /* SUB-SECTION */
+  .sub-section { margin-top: 14px; }
+  .sub-title {
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--red-bright);
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+    opacity: 0.85;
+  }
+  .sub-title.optional { color: var(--text-dim); }
+
+  /* CHECKLIST ITEMS */
+  .check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 6px 4px;
+    border-radius: 2px;
+    transition: background 0.15s;
+    cursor: pointer;
+    position: relative;
+  }
+  .check-item:hover { background: rgba(201,168,76,0.04); }
+  .check-item input[type="checkbox"] { display: none; }
+  .check-box {
+    width: 16px; height: 16px;
+    border: 1px solid var(--border-gold);
+    background: transparent;
+    flex-shrink: 0;
+    margin-top: 2px;
+    position: relative;
+    transition: all 0.15s;
+  }
+  .check-item:hover .check-box { border-color: var(--gold-dim); }
+  .check-box.checked {
+    background: var(--gold-faint);
+    border-color: var(--gold-dim);
+  }
+  .check-box.checked::after {
+    content: '✓';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--gold);
+    font-size: 11px;
+    line-height: 1;
+  }
+  .check-label {
+    font-size: 15px;
+    color: var(--text-main);
+    line-height: 1.4;
+    transition: color 0.15s;
+    flex: 1;
+  }
+  .check-item.done .check-label {
+    color: var(--text-dim);
+    text-decoration: line-through;
+    text-decoration-color: var(--gold-dim);
+  }
+  .check-note {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-style: italic;
+    margin-top: 2px;
+    display: block;
+  }
+
+  /* QUEST STEPS */
+  .quest-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+  }
+  .quest-card {
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .quest-card:hover { border-color: var(--border-gold); }
+  .quest-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: var(--bg-section);
+    cursor: pointer;
+  }
+  .quest-name {
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    color: var(--gold);
+  }
+  .quest-prog {
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+  }
+  .quest-track {
+    height: 2px;
+    background: var(--border);
+  }
+  .quest-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+    transition: width 0.4s;
+  }
+  .quest-steps { padding: 10px 14px 12px; }
+  .quest-card.collapsed .quest-steps { display: none; }
+
+  /* ITEMS */
+  .items-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  .item-group {
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    overflow: hidden;
+  }
+  .item-group-header {
+    padding: 10px 16px;
+    background: var(--bg-section);
+    border-bottom: 1px solid var(--border);
+  }
+  .item-group-title {
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  .item-group-sub {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 2px;
+    font-style: italic;
+  }
+  .item-group-body { padding: 8px 16px 12px; }
+
+  /* MODALS */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(2px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--bg-card);
+    border: 1px solid var(--border-gold);
+    padding: 32px;
+    width: 100%;
+    max-width: 400px;
+    position: relative;
+    box-shadow: 0 0 60px rgba(0,0,0,0.8), 0 0 30px var(--shadow-gold);
+  }
+  .modal::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+  .modal-title {
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .modal input, .modal select {
+    width: 100%;
+    background: var(--bg-deep);
+    border: 1px solid var(--border-gold);
+    color: var(--text-bright);
+    padding: 10px 14px;
+    font-family: 'EB Garamond', serif;
+    font-size: 15px;
+    margin-bottom: 12px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .modal input:focus, .modal select:focus { border-color: var(--gold); }
+  .modal input::placeholder { color: var(--text-dim); }
+  .modal-btns { display: flex; gap: 10px; margin-top: 8px; }
+  .btn {
+    flex: 1;
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 10px;
+    border: 1px solid var(--border-gold);
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.2s;
+    clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+  }
+  .btn:hover { color: var(--gold); border-color: var(--gold-dim); background: var(--gold-faint); }
+  .btn.primary { color: var(--gold); border-color: var(--gold); }
+  .btn.primary:hover { background: var(--gold-faint); box-shadow: 0 0 20px var(--shadow-gold); }
+  .btn.danger:hover { color: var(--red-bright); border-color: var(--red-accent); background: rgba(139,32,32,0.15); }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-dim);
+    font-style: italic;
+    font-size: 15px;
+  }
+  .empty-state .big { font-family: 'Cinzel', serif; font-size: 20px; color: var(--gold-dim); margin-bottom: 8px; display: block; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg-deep); }
+  ::-webkit-scrollbar-thumb { background: var(--border-gold); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--gold-dim); }
+
+  /* TOOLTIP */
+  .tip {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-style: italic;
+    margin-top: 3px;
+  }
+
+  .section-actions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .sm-btn {
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border: 1px solid var(--border-gold);
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.2s;
+    clip-path: polygon(5px 0%, 100% 0%, calc(100% - 5px) 100%, 0% 100%);
+  }
+  .sm-btn:hover { color: var(--gold); border-color: var(--gold-dim); background: var(--gold-faint); }
+
+  @media (max-width: 600px) {
+    .app-header { padding: 32px 16px 24px; }
+    .progress-cats { gap: 12px; }
+    .section-tab { padding: 10px 14px; font-size: 9px; }
+    .quest-list { grid-template-columns: 1fr; }
+    .items-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="app-title">Tarnished's Ledger</div>
+  <div class="app-subtitle">Elden Ring · Playthrough Tracker</div>
+  <div class="rune-divider">⚔ ✦ ⚔</div>
+</header>
+
+<div class="app-body">
+
+  <!-- CHARACTER BAR -->
+  <div class="character-bar" id="charBar">
+    <!-- populated by JS -->
+    <button class="add-char-btn" id="addCharBtn" title="Add Character">+</button>
+  </div>
+
+  <!-- OVERALL PROGRESS -->
+  <div class="overall-progress" id="overallProgress">
+    <div class="progress-header">
+      <span class="progress-label">Overall Completion</span>
+      <span class="progress-pct" id="overallPct">0%</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="overallBar" style="width:0%"></div></div>
+    <div class="progress-cats">
+      <div class="progress-cat">
+        <div class="progress-cat-label">Bosses <span id="bossCount">0/0</span></div>
+        <div class="progress-track-sm"><div class="progress-fill-sm" id="bossBar" style="width:0%"></div></div>
+      </div>
+      <div class="progress-cat">
+        <div class="progress-cat-label">Questlines <span id="questCount">0/0</span></div>
+        <div class="progress-track-sm"><div class="progress-fill-sm" id="questBar" style="width:0%"></div></div>
+      </div>
+      <div class="progress-cat">
+        <div class="progress-cat-label">Items <span id="itemCount">0/0</span></div>
+        <div class="progress-track-sm"><div class="progress-fill-sm" id="itemBar" style="width:0%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION TABS -->
+  <div class="section-tabs">
+    <button class="section-tab active" data-tab="bosses">Bosses</button>
+    <button class="section-tab" data-tab="items">Items</button>
+    <button class="section-tab" data-tab="quests">Questlines</button>
+  </div>
+
+  <div class="content-panel">
+    <div class="section-panel active" id="panel-bosses"></div>
+    <div class="section-panel" id="panel-items"></div>
+    <div class="section-panel" id="panel-quests"></div>
+  </div>
+
+</div>
+
+<!-- ADD CHARACTER MODAL -->
+<div class="modal-overlay" id="addCharModal">
+  <div class="modal">
+    <div class="modal-title">New Tarnished</div>
+    <input type="text" id="newCharName" placeholder="Character name (e.g. Koh)" maxlength="20">
+    <input type="text" id="newCharJourney" placeholder="Journey / playthrough (e.g. Journey 5)" maxlength="20">
+    <div class="modal-btns">
+      <button class="btn" id="cancelAddChar">Cancel</button>
+      <button class="btn primary" id="confirmAddChar">Begin Journey</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DEFAULT DATA
+// ============================================================
+const DEFAULT_CHARACTERS = [
+  {
+    id: 'koh',
+    name: 'Koh',
+    journey: 'Journey 5',
+    bosses: {
+      'Limgrave': {
+        main: [
+          { id: 'margit', name: 'Margit, the Fell Omen', done: true },
+          { id: 'godrick', name: 'Godrick the Grafted', done: true },
+        ],
+        optional: [
+          { id: 'beastman', name: 'Beastman of Farum Azula', done: false },
+          { id: 'bka', name: 'Black Knife Assassin', done: false },
+          { id: 'bhkd', name: 'Bloodhound Knight Darriwil', done: false },
+          { id: 'cemetery', name: 'Cemetery Shade', done: false },
+          { id: 'crucible', name: 'Crucible Knight', done: false },
+          { id: 'deathbird_lg', name: 'Deathbird', done: false },
+          { id: 'dhcd', name: 'Demi-Human Chief Duo', done: false },
+          { id: 'erdtree_bw', name: 'Erdtree Burial Watchdog', done: false },
+          { id: 'flying_dragon', name: 'Flying Dragon Agheel', done: true },
+          { id: 'grave_warden', name: 'Grave Warden Duelist', done: false },
+          { id: 'lion_guardian', name: 'Lion Guardian', done: false },
+          { id: 'mad_pumpkin', name: 'Mad Pumpkin Head', done: false },
+          { id: 'nights_cavalry_lg', name: "Night's Cavalry", done: false },
+          { id: 'patches', name: 'Patches', done: false },
+          { id: 'runebear', name: 'Runebear', done: false },
+          { id: 'soldier_godrick', name: 'Soldier of Godrick', done: false },
+          { id: 'stonedigger', name: 'Stonedigger Troll', done: false },
+          { id: 'tibia_mariner_lg', name: 'Tibia Mariner', done: false },
+          { id: 'tree_sentinel', name: 'Tree Sentinel', done: false },
+          { id: 'ulcerated', name: 'Ulcerated Tree Spirit', done: false },
+        ]
+      },
+      'Liurnia': {
+        main: [
+          { id: 'rennala', name: 'Rennala, Queen of the Full Moon', done: false },
+        ],
+        optional: [
+          { id: 'bka_liurnia', name: 'Black Knife Assassin', done: false },
+          { id: 'crystalian', name: 'Crystalian', done: false },
+          { id: 'erdtree_liurnia', name: 'Erdtree Avatar', done: false },
+          { id: 'glintstone_dragon', name: 'Glintstone Dragon Smarag', done: false },
+          { id: 'magma_wyrm', name: 'Magma Wyrm', done: false },
+          { id: 'nights_cavalry_li', name: "Night's Cavalry", done: false },
+          { id: 'omenkiller', name: 'Omenkiller & Miranda the Blighted Bloom', done: false },
+          { id: 'red_wolf', name: 'Red Wolf of Radagon', done: false },
+          { id: 'royal_knight', name: 'Royal Knight Loretta', done: false },
+        ]
+      },
+      'Caelid': {
+        main: [
+          { id: 'starscourge', name: 'Starscourge Radahn', done: false },
+        ],
+        optional: [
+          { id: 'anastasia', name: 'Anastasia, Tarnished-Eater', done: false },
+          { id: 'beastman_farum', name: 'Beastman of Farum Azula', done: false },
+          { id: 'decaying_ekzykes', name: 'Decaying Ekzykes', done: false },
+          { id: 'erdtree_caelid', name: 'Erdtree Avatar', done: false },
+          { id: 'nox_swordstress', name: 'Nox Swordstress & Nox Priest', done: false },
+          { id: 'putrid_avatar', name: 'Putrid Avatar', done: false },
+        ]
+      },
+      'Altus Plateau': {
+        main: [
+          { id: 'godfrey_first', name: 'Godfrey, First Elden Lord (Golden Shade)', done: false },
+          { id: 'morgott', name: 'Morgott, the Omen King', done: false },
+        ],
+        optional: [
+          { id: 'burial_tree_watchdog', name: 'Burial Tree Watchdog', done: false },
+          { id: 'draconic_tree_sentinel', name: 'Draconic Tree Sentinel', done: false },
+          { id: 'erdtree_altus', name: 'Erdtree Avatar', done: false },
+          { id: 'fallingstar_beast', name: 'Fallingstar Beast', done: false },
+          { id: 'godskin_apostle', name: 'Godskin Apostle', done: false },
+          { id: 'tibia_mariner_altus', name: 'Tibia Mariner', done: false },
+        ]
+      },
+      'Mountaintops': {
+        main: [
+          { id: 'fire_giant', name: 'Fire Giant', done: false },
+        ],
+        optional: [
+          { id: 'borealis', name: 'Borealis the Freezing Fog', done: false },
+          { id: 'commander_niall', name: 'Commander Niall', done: false },
+          { id: 'death_rite_bird', name: 'Death Rite Bird', done: false },
+          { id: 'erdtree_mts', name: 'Erdtree Avatar', done: false },
+          { id: 'nights_cavalry_mts', name: "Night's Cavalry (Duo)", done: false },
+        ]
+      },
+      'Underground (Ainsel/Siofra/Nokron)': {
+        main: [
+          { id: 'ancestor_spirit', name: 'Ancestor Spirit', done: false },
+          { id: 'regal_ancestor', name: 'Regal Ancestor Spirit', done: false },
+          { id: 'mimic_tear', name: 'Mimic Tear', done: false },
+          { id: 'valiant_gargoyle', name: 'Valiant Gargoyle (Duo)', done: false },
+          { id: 'astel', name: 'Astel, Naturalborn of the Void', done: false },
+        ],
+        optional: [
+          { id: 'dragonkin_soldier', name: 'Dragonkin Soldier', done: false },
+          { id: 'dragonkin_soldier_lake', name: 'Dragonkin Soldier of Nokstella', done: false },
+          { id: 'spirit_caller', name: 'Spirit-Caller Snail', done: false },
+        ]
+      },
+      'Crumbling Farum Azula': {
+        main: [
+          { id: 'godskin_duo', name: 'Godskin Duo', done: false },
+          { id: 'maliketh', name: 'Maliketh, the Black Blade', done: false },
+        ],
+        optional: [
+          { id: 'beastman_duo', name: 'Beastman of Farum Azula (Duo)', done: false },
+          { id: 'draconic_tree_cfa', name: 'Draconic Tree Sentinel', done: false },
+          { id: 'crucible_knight_cfa', name: 'Crucible Knight & Misbegotten Warrior', done: false },
+        ]
+      },
+      'Leyndell / Ashen Capital': {
+        main: [
+          { id: 'godfrey_final', name: 'Godfrey, First Elden Lord', done: false },
+          { id: 'elden_beast', name: 'Radagon of the Golden Order / Elden Beast', done: false },
+        ],
+        optional: [
+          { id: 'crucible_knight_ley', name: 'Crucible Knight Ordovis', done: false },
+          { id: 'fell_twins', name: 'Fell Twins', done: false },
+          { id: 'mohg_omen', name: 'Mohg, the Omen', done: false },
+          { id: 'omen_duo', name: 'Omen Duo', done: false },
+        ]
+      },
+      'Shadow of the Erdtree': {
+        main: [
+          { id: 'divine_beast', name: 'Divine Beast Dancing Lion', note: 'Theatre of the Divine Beast, Belurat Tower Settlement', done: false },
+          { id: 'rellana', name: 'Rellana, Twinned Swords', done: false },
+          { id: 'putrescent_knight', name: 'Putrescent Knight', done: false },
+          { id: 'romina', name: 'Romina, Saint of the Bud', done: false },
+          { id: 'metyr', name: 'Metyr, Mother of Fingers', done: false },
+          { id: 'messmer', name: 'Messmer the Impaler', note: "Messmer's Dark Chamber", done: false },
+          { id: 'bayle', name: 'Bayle the Dread', done: false },
+          { id: 'promised_consort', name: 'Promised Consort Radahn', done: false },
+        ],
+        optional: [
+          { id: 'blackgaol_knight', name: 'Blackgaol Knight', note: 'Western Nameless Mausoleum', done: false },
+          { id: 'demi_human_onze', name: 'Demi-Human Swordmaster Onze', note: 'Belurat Gaol', done: false },
+          { id: 'black_knight_garrew', name: 'Black Knight Garrew', note: 'Fog Rift Fort', done: false },
+          { id: 'chief_bloodfiend', name: 'Chief Bloodfiend', note: 'Rivermouth Cave', done: false },
+          { id: 'ancient_dragon_man', name: 'Ancient Dragon-Man', done: false },
+          { id: 'ralva', name: 'Ralva the Great Red Bear', done: false },
+          { id: 'black_knight_edredd', name: 'Black Knight Edredd', done: false },
+          { id: 'ghostflame_dragon', name: 'Ghostflame Dragon', done: false },
+          { id: 'scadutree_avatar', name: 'Scadutree Avatar', done: false },
+          { id: 'golden_hippopotamus', name: 'Golden Hippopotamus', done: false },
+        ]
+      }
+    },
+    items: {
+      'Larval Tears': {
+        subtitle: '11 locations in base game + 2 in SOTE',
+        entries: [
+          { id: 'lt1', name: 'Larval Tear', note: 'Village of the Albinaurics, Liurnia — dropped by Grafted Scion disguised as giant crab', done: false },
+          { id: 'lt2', name: 'Larval Tear', note: 'Near Rebirth Monument, Liurnia — dropped by Large Lobster', done: false },
+          { id: 'lt3', name: 'Larval Tear', note: 'Nokron, Eternal City — on a corpse near the Mimic Tear fog gate', done: false },
+          { id: 'lt4', name: 'Larval Tear', note: 'Nokron, Eternal City — on a corpse near the Ancestral Woods Grace', done: false },
+          { id: 'lt5', name: 'Larval Tear', note: 'Nokstella, Eternal City — on a corpse before the lake area', done: false },
+          { id: 'lt6', name: 'Larval Tear', note: 'Nokstella, Eternal City — on a corpse on the way to the Baleful Shadow', done: false },
+          { id: 'lt7', name: 'Larval Tear', note: 'Siofra River — dropped by a Runebear disguised as a Wandering Noble', done: false },
+          { id: 'lt8', name: 'Larval Tear', note: 'Caelid — dropped by a Lion disguised as a Wandering Noble near the Caelid Highway South Grace', done: false },
+          { id: 'lt9', name: 'Larval Tear', note: 'Altus Plateau — dropped by a Troll disguised as a Wandering Noble near the Windmill Village', done: false },
+          { id: 'lt10', name: 'Larval Tear', note: 'Mohgwyn Palace — on a corpse near the Dynasty Mausoleum Midpoint Grace', done: false },
+          { id: 'lt11', name: 'Larval Tear', note: 'Mohgwyn Palace — dropped by a Silver Tear near the Palace Approach Ledge-Road Grace', done: false },
+          { id: 'lt12', name: 'Larval Tear (SOTE)', note: 'Shadow of the Erdtree — Gravesite Plain area', done: false },
+          { id: 'lt13', name: 'Larval Tear (SOTE)', note: 'Shadow of the Erdtree — second location', done: false },
+        ]
+      },
+      'Dragon Smithing Stones': {
+        subtitle: 'Used to upgrade Ancient Dragon weapons to +10',
+        entries: [
+          { id: 'dss1', name: 'Dragon Smithing Stone', note: 'Farum Azula — on a corpse near the Beside the Great Bridge Grace', done: false },
+          { id: 'dss2', name: 'Dragon Smithing Stone', note: 'Farum Azula — dropped by the Draconic Tree Sentinel before the Maliketh fog gate', done: false },
+          { id: 'dss3', name: 'Dragon Smithing Stone', note: 'Mountaintops of the Giants — sold by a merchant after giving Smithing-Stone Miner\'s Bell Bearing [4]', done: false },
+          { id: 'dss4', name: 'Dragon Smithing Stone', note: 'Haligtree — on a corpse in Elphael, Brace of the Haligtree', done: false },
+          { id: 'dss5', name: 'Dragon Smithing Stone', note: 'Shadow of the Erdtree — Scadu Altus region', done: false },
+          { id: 'dss6', name: 'Dragon Smithing Stone', note: 'Shadow of the Erdtree — Abyssal Woods', done: false },
+        ]
+      },
+      'Somber Ancient Dragon Smithing Stones': {
+        subtitle: 'Used to upgrade Unique weapons to +10',
+        entries: [
+          { id: 'sads1', name: 'Somber Ancient Dragon Smithing Stone', note: 'Farum Azula — on a corpse near the Dragon Temple Lift Grace', done: false },
+          { id: 'sads2', name: 'Somber Ancient Dragon Smithing Stone', note: 'Mountaintops — Consecrated Snowfield, on a corpse east of the Inner Consecrated Snowfield Grace', done: false },
+          { id: 'sads3', name: 'Somber Ancient Dragon Smithing Stone', note: 'Haligtree — near Malenia fog gate', done: false },
+          { id: 'sads4', name: 'Somber Ancient Dragon Smithing Stone', note: 'Mohgwyn Palace — on a corpse near the Dynasty Mausoleum Entrance', done: false },
+          { id: 'sads5', name: 'Somber Ancient Dragon Smithing Stone (SOTE)', note: 'Shadow of the Erdtree — multiple locations', done: false },
+        ]
+      }
+    },
+    quests: {
+      'Starting in Limgrave': [
+        {
+          id: 'q_alexander',
+          name: 'Alexander, Jar Warrior',
+          steps: [
+            { id: 's1', text: 'Find Alexander stuck in the ground north of Saintsbridge', done: false },
+            { id: 's2', text: 'Hit him free. He\'ll reward you and move to Redmane Castle', done: false },
+            { id: 's3', text: 'Speak to him at Redmane Castle before the Radahn Festival', done: false },
+            { id: 's4', text: 'Find him soaking in a pool of rot in southern Caelid after Radahn', done: false },
+            { id: 's5', text: 'Find him at the base of the steps before the Volcano Manor road', done: false },
+            { id: 's6', text: 'Find him at the Farum Azula fog before the Godskin Duo', done: false },
+            { id: 's7', text: 'Duel him at the Second Church of Marika on the Mountaintops. Defeat him to get Shard of Alexander', done: false },
+          ]
+        },
+        {
+          id: 'q_blaidd',
+          name: 'Blaidd',
+          steps: [
+            { id: 's1', text: 'Find Blaidd howling in the Mistwood Ruins, summon him with Finger Snap emote (from Merchant Kale)', done: false },
+            { id: 's2', text: 'He asks you to find Darriwil — defeat Bloodhound Knight Darriwil in Forlorn Hound Evergaol', done: false },
+            { id: 's3', text: 'Report back. He\'ll go to Ranni\'s Rise — continue through Ranni\'s questline', done: false },
+            { id: 's4', text: 'After Ranni disappears, find him imprisoned below Ranni\'s Rise', done: false },
+            { id: 's5', text: 'After Elden Beast, find him outside Ranni\'s Rise, now hostile. Defeat him for Blaidd\'s Armor set and Royal Greatsword', done: false },
+          ]
+        },
+        {
+          id: 'q_patches',
+          name: 'Patches',
+          steps: [
+            { id: 's1', text: 'Find Patches in Murkwater Cave — he ambushes you. Let him surrender', done: false },
+            { id: 's2', text: 'He opens a shop. Buy the Crouch gesture if you want it', done: false },
+            { id: 's3', text: 'He may appear later at Volcano Manor and Shaded Castle depending on quest progression', done: false },
+            { id: 's4', text: 'Final appearance: outside Raya Lucaria near the telescope, sells Dancer\'s Castanets for Tanith', done: false },
+          ]
+        },
+        {
+          id: 'q_ranni',
+          name: 'Ranni the Witch',
+          steps: [
+            { id: 's1', text: 'Meet Ranni at Ranni\'s Rise (Three Sisters, northwest Liurnia) — agree to serve her', done: false },
+            { id: 's2', text: 'Speak to Blaidd, Iji, and Seluvis at the rise', done: false },
+            { id: 's3', text: 'Descend to Siofra River, talk to Blaidd. Investigate the star map with Seluvis and Sellen', done: false },
+            { id: 's4', text: 'Defeat Starscourge Radahn to trigger a falling star', done: false },
+            { id: 's5', text: 'Find Nokron through the crater south of Mistwood. Retrieve the Fingerslayer Blade', done: false },
+            { id: 's6', text: 'Give the blade to Ranni. Receive Carian Inverted Statue', done: false },
+            { id: 's7', text: 'Use the statue in the Divine Tower of Liurnia to reach the Cursemark of Death', done: false },
+            { id: 's8', text: 'Navigate Ainsel River — find miniature Ranni doll, exhaust dialogue at Site of Grace', done: false },
+            { id: 's9', text: 'Defeat Baleful Shadow in Ainsel River. Receive Discarded Palace Key', done: false },
+            { id: 's10', text: 'Use key in Raya Lucaria Grand Library to open the treasure chest', done: false },
+            { id: 's11', text: 'Find Ranni at the bottom of the Lake of Rot. Give her the Dark Moon Ring from the chest', done: false },
+            { id: 's12', text: 'Ranni\'s ending unlocked — choose Age of Stars ending at the Elden Ring', done: false },
+          ]
+        },
+      ],
+      'Starting in Caelid': [
+        {
+          id: 'q_millicent',
+          name: 'Millicent',
+          steps: [
+            { id: 's1', text: 'Get the Unalloyed Gold Needle from Commander O\'Neil in the Swamp of Aeonia', done: false },
+            { id: 's2', text: 'Deliver the needle to Millicent at the Church of the Plague. She\'ll feel better after resting at a Grace', done: false },
+            { id: 's3', text: 'Head back to Gowry\'s shack', done: false },
+            { id: 's4', text: 'Now she\'s moving to the Altus Plateau (Erdtree-Gazing Hill Grace area)', done: false },
+            { id: 's5', text: 'Next find her in the Mountaintops (near Ancient Snow Valley Ruins)', done: false },
+            { id: 's6', text: 'And then the Prayer Room Grace in Elphael, Brace of the Haligtree', done: false },
+            { id: 's7', text: 'Move into the drainage channel. Assist or betray her in the invasion — Assist: Rotten Winged Sword Insignia / Betray: Millicent\'s Prosthesis', done: false },
+          ]
+        },
+        {
+          id: 'q_anastasia',
+          name: 'Anastasia, Tarnished-Eater',
+          steps: [
+            { id: 's1', text: 'First encounter: Church of Inhibition, Liurnia (hostile NPC invader)', done: false },
+            { id: 's2', text: 'Second encounter: Smoldering Church, Caelid (hostile invader)', done: false },
+            { id: 's3', text: 'Third encounter: Mountaintops, west of Freezing Lake Grace (hostile invader)', done: false },
+          ]
+        },
+      ],
+      'Starting at the Roundtable Hold': [
+        {
+          id: 'q_fia',
+          name: 'Fia, Deathbed Companion',
+          steps: [
+            { id: 's1', text: 'Accept her embrace at the Roundtable Hold (receive Baldachin\'s Blessing, reduces max HP until used)', done: false },
+            { id: 's2', text: 'Exhaust her dialogue multiple times — she\'ll reveal she has a dagger', done: false },
+            { id: 's3', text: 'Get the Weathered Dagger — give it to D, Hunter of the Dead', done: false },
+            { id: 's4', text: 'After Morgott, find D\'s corpse and Fia\'s room behind hidden door. Fia takes D\'s armor set', done: false },
+            { id: 's5', text: 'Find Fia in the Deeproot Depths (via Valiant Gargoyle waterfall). Give Cursemark of Death', done: false },
+            { id: 's6', text: 'Exhaust dialogue, reload, fight Champions. Reload again and give her the cursemark', done: false },
+            { id: 's7', text: 'Enter her dream — defeat Lichdragon Fortissax. Receive Mending Rune of the Death-Prince', done: false },
+          ]
+        },
+        {
+          id: 'q_dung_eater',
+          name: 'Dung Eater',
+          steps: [
+            { id: 's1', text: 'Find his red phantom in the Roundtable Hold after seeing his message', done: false },
+            { id: 's2', text: 'Obtain a Seedbed Curse (various corpses throughout the lands)', done: false },
+            { id: 's3', text: 'Find his real body imprisoned in the Subterranean Shunning-Grounds below Leyndell', done: false },
+            { id: 's4', text: 'Give him a Seedbed Curse to receive the Sewer-Gaol Key', done: false },
+            { id: 's5', text: 'Give him 5 total Seedbed Curses for his armor and Mending Rune of the Fell Curse', done: false },
+          ]
+        },
+      ],
+      'Starting in Liurnia': [
+        {
+          id: 'q_sellen',
+          name: 'Sorceress Sellen',
+          steps: [
+            { id: 's1', text: 'Meet Sellen at the Waypoint Ruins Cellar in Limgrave — she becomes a trainer', done: false },
+            { id: 's2', text: 'Find Master Lusat in the Sellia Hideaway cave in Caelid. Receive Stars of Ruin', done: false },
+            { id: 's3', text: 'Find Master Azur on the Hermit Village plateau in Altus. Receive Comet Azur', done: false },
+            { id: 's4', text: 'Speak to Sellen about both masters', done: false },
+            { id: 's5', text: 'Find Sellen\'s real body in the Witchbane Ruins, Weeping Peninsula. Receive Sellen\'s Primal Glintstone', done: false },
+            { id: 's6', text: 'Find the new puppet body in Three Sisters. Install the Primal Glintstone', done: false },
+            { id: 's7', text: 'Finish Ranni\'s quest first. Then help Sellen or side with Jerren at Raya Lucaria', done: false },
+          ]
+        },
+      ],
+      'Volcano Manor Quests': [
+        {
+          id: 'q_volcano',
+          name: 'Volcano Manor (Tanith)',
+          steps: [
+            { id: 's1', text: 'Join Volcano Manor — speak to Tanith in the main hall', done: false },
+            { id: 's2', text: 'Complete assassination request 1: Old Knight Istvan (Limgrave)', done: false },
+            { id: 's3', text: 'Complete assassination request 2: Rileigh the Idle (Altus Plateau)', done: false },
+            { id: 's4', text: 'Complete assassination request 3: Juno Hoslow (Mountaintops)', done: false },
+            { id: 's5', text: 'Defeat Rykard, Lord of Blasphemy (Prawn Miner or Serpent-Hunter spear)', done: false },
+            { id: 's6', text: 'Give Dancer\'s Castanets (from Patches) to Tanith — she\'ll eat Rykard', done: false },
+          ]
+        },
+      ],
+    }
+  }
+];
+
+// ============================================================
+// STATE
+// ============================================================
+let state = {
+  characters: [],
+  activeCharId: null,
+  activeTab: 'bosses',
+};
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem('er_tracker_v1');
+    if (saved) {
+      state = JSON.parse(saved);
+    } else {
+      state.characters = JSON.parse(JSON.stringify(DEFAULT_CHARACTERS));
+      state.activeCharId = state.characters[0].id;
+      saveState();
+    }
+  } catch(e) {
+    state.characters = JSON.parse(JSON.stringify(DEFAULT_CHARACTERS));
+    state.activeCharId = state.characters[0].id;
+  }
+}
+
+function saveState() {
+  localStorage.setItem('er_tracker_v1', JSON.stringify(state));
+}
+
+function getActiveChar() {
+  return state.characters.find(c => c.id === state.activeCharId);
+}
+
+// ============================================================
+// PROGRESS CALCULATIONS
+// ============================================================
+function calcBossProgress(char) {
+  let total = 0, done = 0;
+  for (const area of Object.values(char.bosses)) {
+    for (const boss of [...area.main, ...area.optional]) {
+      total++; if (boss.done) done++;
+    }
+  }
+  return { total, done };
+}
+
+function calcItemProgress(char) {
+  let total = 0, done = 0;
+  for (const group of Object.values(char.items)) {
+    for (const item of group.entries) {
+      total++; if (item.done) done++;
+    }
+  }
+  return { total, done };
+}
+
+function calcQuestProgress(char) {
+  let total = 0, done = 0;
+  for (const quests of Object.values(char.quests)) {
+    for (const quest of quests) {
+      for (const step of quest.steps) {
+        total++; if (step.done) done++;
+      }
+    }
+  }
+  return { total, done };
+}
+
+function pct(done, total) {
+  return total === 0 ? 0 : Math.round((done / total) * 100);
+}
+
+// ============================================================
+// RENDER FUNCTIONS
+// ============================================================
+function renderAll() {
+  renderCharBar();
+  renderProgress();
+  renderActiveTab();
+}
+
+function renderCharBar() {
+  const bar = document.getElementById('charBar');
+  const addBtn = document.getElementById('addCharBtn');
+  // Remove old tabs
+  bar.querySelectorAll('.char-tab').forEach(t => t.remove());
+  const char = getActiveChar();
+  state.characters.forEach(c => {
+    const tab = document.createElement('button');
+    tab.className = 'char-tab' + (c.id === state.activeCharId ? ' active' : '');
+    tab.innerHTML = `${c.name}<span class="journey-badge">${c.journey}</span>`;
+    tab.onclick = () => { state.activeCharId = c.id; saveState(); renderAll(); };
+    bar.insertBefore(tab, addBtn);
+  });
+}
+
+function renderProgress() {
+  const char = getActiveChar();
+  if (!char) return;
+  const bp = calcBossProgress(char);
+  const qp = calcQuestProgress(char);
+  const ip = calcItemProgress(char);
+  const totalDone = bp.done + qp.done + ip.done;
+  const totalAll = bp.total + qp.total + ip.total;
+  const overall = pct(totalDone, totalAll);
+  document.getElementById('overallPct').textContent = overall + '%';
+  document.getElementById('overallBar').style.width = overall + '%';
+  document.getElementById('bossCount').textContent = `${bp.done}/${bp.total}`;
+  document.getElementById('bossBar').style.width = pct(bp.done, bp.total) + '%';
+  document.getElementById('questCount').textContent = `${qp.done}/${qp.total}`;
+  document.getElementById('questBar').style.width = pct(qp.done, qp.total) + '%';
+  document.getElementById('itemCount').textContent = `${ip.done}/${ip.total}`;
+  document.getElementById('itemBar').style.width = pct(ip.done, ip.total) + '%';
+}
+
+function renderActiveTab() {
+  document.querySelectorAll('.section-panel').forEach(p => p.classList.remove('active'));
+  const panel = document.getElementById('panel-' + state.activeTab);
+  if (panel) panel.classList.add('active');
+  if (state.activeTab === 'bosses') renderBosses();
+  if (state.activeTab === 'items') renderItems();
+  if (state.activeTab === 'quests') renderQuests();
+}
+
+function renderBosses() {
+  const char = getActiveChar();
+  const panel = document.getElementById('panel-bosses');
+  if (!char) { panel.innerHTML = '<div class="empty-state"><span class="big">No Tarnished Found</span>Add a character to begin tracking.</div>'; return; }
+
+  let html = `<div class="section-actions">
+    <button class="sm-btn" onclick="collapseAll('bosses')">Collapse All</button>
+    <button class="sm-btn" onclick="expandAll('bosses')">Expand All</button>
+  </div>`;
+
+  for (const [areaName, areaData] of Object.entries(char.bosses)) {
+    const allBosses = [...areaData.main, ...areaData.optional];
+    const areaDone = allBosses.filter(b => b.done).length;
+    const areaTotal = allBosses.length;
+    html += `<div class="area-group" id="area_${slugify(areaName)}">
+      <div class="area-header" onclick="toggleArea('${slugify(areaName)}')">
+        <span class="area-title">${areaName}</span>
+        <span class="area-meta">
+          <span class="area-count">${areaDone} / ${areaTotal}</span>
+          <span class="area-chevron">▼</span>
+        </span>
+      </div>
+      <div class="area-body">`;
+
+    if (areaData.main.length > 0) {
+      html += `<div class="sub-section"><div class="sub-title">Main Bosses</div>`;
+      areaData.main.forEach(boss => {
+        html += renderCheckItem(boss, `toggleBoss('${char.id}','${areaName}','main','${boss.id}')`);
+      });
+      html += `</div>`;
+    }
+    if (areaData.optional.length > 0) {
+      html += `<div class="sub-section"><div class="sub-title optional">Optional Bosses</div>`;
+      areaData.optional.forEach(boss => {
+        html += renderCheckItem(boss, `toggleBoss('${char.id}','${areaName}','optional','${boss.id}')`);
+      });
+      html += `</div>`;
+    }
+    html += `</div></div>`;
+  }
+  panel.innerHTML = html;
+}
+
+function renderItems() {
+  const char = getActiveChar();
+  const panel = document.getElementById('panel-items');
+  if (!char) { panel.innerHTML = '<div class="empty-state"><span class="big">No Tarnished Found</span></div>'; return; }
+
+  let html = `<div class="items-grid">`;
+  for (const [groupName, groupData] of Object.entries(char.items)) {
+    const done = groupData.entries.filter(e => e.done).length;
+    const total = groupData.entries.length;
+    html += `<div class="item-group">
+      <div class="item-group-header">
+        <div class="item-group-title">${groupName} — ${done}/${total}</div>
+        <div class="item-group-sub">${groupData.subtitle}</div>
+      </div>
+      <div class="item-group-body">`;
+    groupData.entries.forEach(item => {
+      html += renderCheckItem(item, `toggleItem('${char.id}','${groupName}','${item.id}')`);
+    });
+    html += `</div></div>`;
+  }
+  html += `</div>`;
+  panel.innerHTML = html;
+}
+
+function renderQuests() {
+  const char = getActiveChar();
+  const panel = document.getElementById('panel-quests');
+  if (!char) { panel.innerHTML = '<div class="empty-state"><span class="big">No Tarnished Found</span></div>'; return; }
+
+  let html = '';
+  for (const [regionName, quests] of Object.entries(char.quests)) {
+    html += `<div class="area-group" id="qregion_${slugify(regionName)}">
+      <div class="area-header" onclick="toggleArea('qregion_${slugify(regionName)}')">
+        <span class="area-title">${regionName}</span>
+        <span class="area-meta">
+          <span class="area-count">${quests.length} quest${quests.length !== 1 ? 's' : ''}</span>
+          <span class="area-chevron">▼</span>
+        </span>
+      </div>
+      <div class="area-body">
+        <div class="quest-list">`;
+
+    quests.forEach(quest => {
+      const done = quest.steps.filter(s => s.done).length;
+      const total = quest.steps.length;
+      const p = pct(done, total);
+      html += `<div class="quest-card" id="quest_${quest.id}">
+        <div class="quest-header" onclick="toggleQuest('${quest.id}')">
+          <span class="quest-name">${quest.name}</span>
+          <span class="quest-prog">${done}/${total}</span>
+        </div>
+        <div class="quest-track"><div class="quest-fill" style="width:${p}%"></div></div>
+        <div class="quest-steps">`;
+      quest.steps.forEach(step => {
+        html += renderCheckItem(step, `toggleQuestStep('${char.id}','${regionName}','${quest.id}','${step.id}')`);
+      });
+      html += `</div></div>`;
+    });
+
+    html += `</div></div></div>`;
+  }
+  panel.innerHTML = html;
+}
+
+function renderCheckItem(item, onclick) {
+  return `<div class="check-item${item.done ? ' done' : ''}" onclick="${onclick}">
+    <div class="check-box${item.done ? ' checked' : ''}"></div>
+    <div class="check-label">${item.name}${item.note ? `<span class="check-note">${item.note}</span>` : ''}</div>
+  </div>`;
+}
+
+// ============================================================
+// TOGGLE FUNCTIONS
+// ============================================================
+window.toggleBoss = function(charId, areaName, type, bossId) {
+  const char = state.characters.find(c => c.id === charId);
+  const boss = char.bosses[areaName][type].find(b => b.id === bossId);
+  boss.done = !boss.done;
+  saveState();
+  renderBosses();
+  renderProgress();
+};
+
+window.toggleItem = function(charId, groupName, itemId) {
+  const char = state.characters.find(c => c.id === charId);
+  const item = char.items[groupName].entries.find(i => i.id === itemId);
+  item.done = !item.done;
+  saveState();
+  renderItems();
+  renderProgress();
+};
+
+window.toggleQuestStep = function(charId, regionName, questId, stepId) {
+  const char = state.characters.find(c => c.id === charId);
+  const quest = char.quests[regionName].find(q => q.id === questId);
+  const step = quest.steps.find(s => s.id === stepId);
+  step.done = !step.done;
+  saveState();
+  renderQuests();
+  renderProgress();
+};
+
+window.toggleArea = function(areaId) {
+  const el = document.getElementById('area_' + areaId) || document.getElementById(areaId);
+  if (el) el.classList.toggle('collapsed');
+};
+
+window.toggleQuest = function(questId) {
+  const el = document.getElementById('quest_' + questId);
+  if (el) el.classList.toggle('collapsed');
+};
+
+window.collapseAll = function(tab) {
+  document.querySelectorAll('#panel-' + tab + ' .area-group').forEach(el => el.classList.add('collapsed'));
+};
+
+window.expandAll = function(tab) {
+  document.querySelectorAll('#panel-' + tab + ' .area-group').forEach(el => el.classList.remove('collapsed'));
+};
+
+// ============================================================
+// ADD CHARACTER
+// ============================================================
+document.getElementById('addCharBtn').onclick = () => {
+  document.getElementById('newCharName').value = '';
+  document.getElementById('newCharJourney').value = '';
+  document.getElementById('addCharModal').classList.add('open');
+  setTimeout(() => document.getElementById('newCharName').focus(), 50);
+};
+
+document.getElementById('cancelAddChar').onclick = () => {
+  document.getElementById('addCharModal').classList.remove('open');
+};
+
+document.getElementById('confirmAddChar').onclick = () => {
+  const name = document.getElementById('newCharName').value.trim();
+  const journey = document.getElementById('newCharJourney').value.trim() || 'Journey 1';
+  if (!name) return;
+  const template = JSON.parse(JSON.stringify(DEFAULT_CHARACTERS[0]));
+  // Reset all progress
+  for (const area of Object.values(template.bosses)) {
+    [...area.main, ...area.optional].forEach(b => b.done = false);
+  }
+  for (const group of Object.values(template.items)) {
+    group.entries.forEach(i => i.done = false);
+  }
+  for (const quests of Object.values(template.quests)) {
+    quests.forEach(q => q.steps.forEach(s => s.done = false));
+  }
+  template.id = 'char_' + Date.now();
+  template.name = name;
+  template.journey = journey;
+  state.characters.push(template);
+  state.activeCharId = template.id;
+  saveState();
+  document.getElementById('addCharModal').classList.remove('open');
+  renderAll();
+};
+
+document.getElementById('addCharModal').onclick = (e) => {
+  if (e.target === document.getElementById('addCharModal')) {
+    document.getElementById('addCharModal').classList.remove('open');
+  }
+};
+
+// ============================================================
+// TAB SWITCHING
+// ============================================================
+document.querySelectorAll('.section-tab').forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll('.section-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    state.activeTab = tab.dataset.tab;
+    renderActiveTab();
+  };
+});
+
+// ============================================================
+// UTILS
+// ============================================================
+function slugify(str) {
+  return str.toLowerCase().replace(/[^a-z0-9]/g, '_');
+}
+
+// ============================================================
+// INIT
+// ============================================================
+loadState();
+renderAll();
+</script>
+</body>
+</html>
